@@ -37,6 +37,11 @@ class PremiumCanvasAnimations:
                     pointer-events: none;
                     z-index: -1;
                 }
+                body {
+                    margin: 0;
+                    padding: 0;
+                    overflow: hidden;
+                }
             </style>
         </head>
         <body>
@@ -770,21 +775,31 @@ class GlobalPortSystem:
 class AuthSystem:
     def __init__(self):
         self.users = {
-            "admin": {"password": self.hash_password("admin123"), "role": "admin", "company": "SkyWatch AI"},
-            "demo": {"password": self.hash_password("demo123"), "role": "user", "company": "Demo Corp"}
+            'admin': {
+                'password': self._hash_password('admin123'),
+                'role': 'admin',
+                'name': 'System Administrator'
+            },
+            'operator': {
+                'password': self._hash_password('operator123'),
+                'role': 'operator', 
+                'name': 'Port Operator'
+            },
+            'viewer': {
+                'password': self._hash_password('viewer123'),
+                'role': 'viewer',
+                'name': 'Viewer'
+            }
         }
     
-    def hash_password(self, password):
+    def _hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
     
     def authenticate(self, username, password):
         if username in self.users:
-            if self.users[username]["password"] == self.hash_password(password):
-                return True
-        return False
-    
-    def get_user_role(self, username):
-        return self.users.get(username, {}).get("role", "user")
+            if self.users[username]['password'] == self._hash_password(password):
+                return True, self.users[username]
+        return False, None
 
 # =============================================================================
 # BUSINESS INTELLIGENCE ANALYTICS
@@ -831,225 +846,518 @@ class BusinessIntelligence:
 # MAIN ENTERPRISE APPLICATION
 # =============================================================================
 
-class SkyWatchEnterprise:
+class SkyWatchAIEnterprise:
     def __init__(self):
-        self.predictive_ai = PredictiveAI()
-        self.port_system = GlobalPortSystem()
         self.auth_system = AuthSystem()
+        self.port_system = GlobalPortSystem()
+        self.predictive_ai = PredictiveAI()
         self.business_intel = BusinessIntelligence()
-        self.current_port = "New York"
-        self.animations = PremiumCanvasAnimations()  # Add animations
-    
-    def run_enterprise_dashboard(self):
-        """Main enterprise dashboard"""
+        self.animations = PremiumCanvasAnimations()
         
-        # ===== AUTHENTICATION =====
+        # Initialize session state
         if 'authenticated' not in st.session_state:
             st.session_state.authenticated = False
+        if 'current_user' not in st.session_state:
+            st.session_state.current_user = None
+        if 'selected_port' not in st.session_state:
+            st.session_state.selected_port = "Singapore"
+        if 'auto_refresh' not in st.session_state:
+            st.session_state.auto_refresh = True
+    
+    def add_premium_styles(self):
+        """Add premium CSS styles"""
+        st.markdown("""
+        <style>
+            /* Premium Glass Morphism */
+            .glass-card {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 20px;
+                padding: 2rem;
+                margin: 1rem 0;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+            }
+            
+            .glass-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+                border: 1px solid rgba(102, 126, 234, 0.5);
+            }
+            
+            /* Animated Background */
+            .animated-gradient {
+                background: linear-gradient(-45deg, #0c0c2e, #1a1a3e, #2d2d5e, #3d3d7e);
+                background-size: 400% 400%;
+                animation: gradientShift 15s ease infinite;
+            }
+            
+            @keyframes gradientShift {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+            
+            /* Enhanced Metrics */
+            .metric-card {
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+                border: 1px solid rgba(102, 126, 234, 0.3);
+                border-radius: 15px;
+                padding: 1.5rem;
+                margin: 0.5rem;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .metric-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            }
+            
+            .metric-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            }
+            
+            /* Premium Button */
+            .stButton button {
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                border: none;
+                border-radius: 25px;
+                padding: 12px 30px;
+                color: white;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: all 0.3s ease;
+            }
+            
+            .stButton button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            }
+            
+            /* Live Indicator */
+            .live-indicator {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: #ff6b6b;
+                border-radius: 50%;
+                margin-right: 8px;
+                animation: livePulse 1.5s infinite;
+            }
+            
+            @keyframes livePulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.5); opacity: 0.7; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            
+            /* Hide Streamlit elements */
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+        </style>
+        """, unsafe_allow_html=True)
+    
+    def login_page(self):
+        """Enhanced login page with premium styling"""
+        st.markdown("""
+        <div style='text-align: center; padding: 5rem 0;'>
+            <h1 style='color: #667eea; font-size: 3.5rem; margin-bottom: 1rem;'>🌌 SkyWatch AI Enterprise</h1>
+            <p style='color: #a0a0c0; font-size: 1.2rem;'>Advanced Maritime Intelligence Platform</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        if not st.session_state.authenticated:
-            self.show_login()
-            return
+        col1, col2, col3 = st.columns([1, 2, 1])
         
-        # ===== ENTERPRISE DASHBOARD =====
-        self.setup_enterprise_ui()
+        with col2:
+            with st.container():
+                st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+                
+                st.markdown("""
+                <h2 style='text-align: center; color: #667eea; margin-bottom: 2rem;'>🔐 Secure Login</h2>
+                """, unsafe_allow_html=True)
+                
+                username = st.text_input("👤 Username", placeholder="Enter your username")
+                password = st.text_input("🔒 Password", type="password", placeholder="Enter your password")
+                
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if st.button("🚀 Login", use_container_width=True):
+                        success, user_info = self.auth_system.authenticate(username, password)
+                        if success:
+                            st.session_state.authenticated = True
+                            st.session_state.current_user = user_info
+                            st.success(f"Welcome {user_info['name']}!")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Invalid credentials. Please try again.")
+                
+                st.markdown("""
+                <div style='text-align: center; margin-top: 2rem; color: #a0a0c0;'>
+                    <p><strong>Demo Credentials:</strong></p>
+                    <p>👑 admin / admin123</p>
+                    <p>⚡ operator / operator123</p>
+                    <p>👀 viewer / viewer123</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+    
+    def dashboard_header(self):
+        """Premium dashboard header"""
+        col1, col2, col3 = st.columns([1, 2, 1])
         
-        # Sidebar controls
-        with st.sidebar:
-            self.show_sidebar_controls()
+        with col1:
+            st.markdown(f"""
+            <div style='text-align: left;'>
+                <h3 style='color: #667eea; margin: 0;'>👤 {st.session_state.current_user['name']}</h3>
+                <p style='color: #a0a0c0; margin: 0;'>{st.session_state.current_user['role'].title()}</p>
+            </div>
+            """, unsafe_allow_html=True)
         
-        # Main dashboard
+        with col2:
+            st.markdown("""
+            <div style='text-align: center;'>
+                <h1 style='color: #667eea; margin: 0;'>🌌 SkyWatch AI Enterprise</h1>
+                <p style='color: #a0a0c0; margin: 0;'>Real-time Global Maritime Intelligence</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            if st.button("🚪 Logout"):
+                st.session_state.authenticated = False
+                st.session_state.current_user = None
+                st.rerun()
+        
+        st.markdown("---")
+    
+    def global_overview(self):
+        """Global overview with premium metrics"""
+        st.markdown("""
+        <div style='text-align: center; margin-bottom: 2rem;'>
+            <h2>🌍 Global Maritime Overview</h2>
+            <p style='color: #a0a0c0;'>Real-time monitoring across all major ports</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Key Metrics
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            self.show_business_metrics()
+            st.markdown("""
+            <div class='metric-card'>
+                <h3 style='color: #667eea; margin: 0;'>🚢 Total Vessels</h3>
+                <h1 style='color: #fff; margin: 1rem 0;'>2,847</h1>
+                <p style='color: #a0a0c0; margin: 0;'>+12 this hour</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col2:
-            self.show_ai_predictions()
+            st.markdown("""
+            <div class='metric-card'>
+                <h3 style='color: #667eea; margin: 0;'>💰 Cargo Value</h3>
+                <h1 style='color: #fff; margin: 1rem 0;'>$42.8B</h1>
+                <p style='color: #a0a0c0; margin: 0;'>Active shipments</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col3:
-            self.show_port_efficiency()
+            st.markdown("""
+            <div class='metric-card'>
+                <h3 style='color: #667eea; margin: 0;'>⚡ Port Efficiency</h3>
+                <h1 style='color: #fff; margin: 1rem 0;'>87%</h1>
+                <p style='color: #a0a0c0; margin: 0;'>Global average</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with col4:
-            self.show_risk_alerts()
-        
-        # Main content area
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "🌍 Global Overview", 
-            "🚢 Live Tracking", 
-            "📈 Analytics",
-            "🤖 AI Insights",
-            "💼 Business Intelligence"
-        ])
-        
-        with tab1:
-            self.show_global_overview()
-        
-        with tab2:
-            self.show_live_tracking()
-        
-        with tab3:
-            self.show_analytics_dashboard()
-        
-        with tab4:
-            self.show_ai_insights()
-        
-        with tab5:
-            self.show_business_intelligence()
+            st.markdown("""
+            <div class='metric-card'>
+                <h3 style='color: #667eea; margin: 0;'>🌡️ AI Predictions</h3>
+                <h1 style='color: #fff; margin: 1rem 0;'>94%</h1>
+                <p style='color: #a0a0c0; margin: 0;'>Accuracy rate</p>
+            </div>
+            """, unsafe_allow_html=True)
     
-    def show_login(self):
-        """User authentication interface"""
+    def port_monitoring(self):
+        """Advanced port monitoring section"""
         st.markdown("""
-        <style>
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        st.title("🔐 SkyWatch AI Enterprise")
-        st.write("**Login to access satellite intelligence platform**")
-        
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        
-        if st.button("Login", type="primary"):
-            if self.auth_system.authenticate(username, password):
-                st.session_state.authenticated = True
-                st.session_state.username = username
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
-        
-        st.info("**Demo Accounts:** admin/admin123 or demo/demo123")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    def setup_enterprise_ui(self):
-        """Setup enterprise UI theme"""
-        st.set_page_config(
-            page_title="SkyWatch AI Enterprise",
-            page_icon="🛰️",
-            layout="wide",
-            initial_sidebar_state="expanded"
-        )
-        
-        # Custom CSS for enterprise look
-        st.markdown("""
-        <style>
-        .enterprise-header {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-        }
-        .metric-card {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
-            border-left: 5px solid #667eea;
-            margin: 0.5rem 0;
-        }
-        .prediction-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .alert-card {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 1rem;
-            border-radius: 10px;
-            margin: 0.5rem 0;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # Header
-        st.markdown(f"""
-        <div class="enterprise-header">
-            <h1>🛰️ SKYWATCH AI ENTERPRISE PLATFORM</h1>
-            <h3>Global Satellite Intelligence • AI Predictive Analytics • Business Intelligence</h3>
-            <p>Welcome, {st.session_state.username} | Last Updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+        <div style='text-align: center; margin: 3rem 0 2rem 0;'>
+            <h2>🏢 Port Monitoring & Analytics</h2>
+            <p style='color: #a0a0c0;'>Real-time vessel tracking and port operations</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    def show_sidebar_controls(self):
-        """Sidebar controls"""
-        st.sidebar.title("Control Panel")
         
-        # Port selection
-        self.current_port = st.sidebar.selectbox(
-            "🌍 Select Port",
-            list(self.port_system.ports.keys()),
-            index=0
+        # Port Selection
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            selected_port = st.selectbox(
+                "Select Port",
+                list(self.port_system.ports.keys()),
+                index=list(self.port_system.ports.keys()).index(st.session_state.selected_port)
+            )
+            st.session_state.selected_port = selected_port
+        
+        with col2:
+            st.session_state.auto_refresh = st.checkbox("🔄 Live Auto-Refresh", value=True)
+        
+        # Get port data
+        port_data = self.port_system.ports[selected_port]
+        ships_data = self.port_system.get_port_ships(selected_port)
+        
+        # Port Information
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown(f"""
+            <div class='glass-card'>
+                <h3 style='color: #667eea;'>📍 Port Details</h3>
+                <p><strong>Country:</strong> {port_data['country']}</p>
+                <p><strong>Region:</strong> {port_data['region']}</p>
+                <p><strong>Volume:</strong> {port_data['volume']}</p>
+                <p><strong>Coordinates:</strong> {port_data['lat']:.2f}, {port_data['lon']:.2f}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            # AI Predictions
+            congestion_prediction = self.predictive_ai.predict_port_congestion(selected_port)
+            st.markdown(f"""
+            <div class='glass-card'>
+                <h3 style='color: #667eea;'>🤖 AI Predictions</h3>
+                <p><strong>Congestion Level:</strong> {congestion_prediction['congestion_level']*100}%</p>
+                <p><strong>Trend:</strong> {congestion_prediction['trend'].title()}</p>
+                <p><strong>Peak Hours:</strong> {', '.join(congestion_prediction['peak_hours'])}</p>
+                <p><strong>Recommendation:</strong> {congestion_prediction['recommendation']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            # Real-time Statistics
+            total_ships = len(ships_data)
+            moving_ships = len([s for s in ships_data if s['Speed'] > 0])
+            avg_speed = np.mean([s['Speed'] for s in ships_data])
+            total_cargo = sum([s['Cargo_Value_M'] for s in ships_data])
+            
+            st.markdown(f"""
+            <div class='glass-card'>
+                <h3 style='color: #667eea;'>📊 Live Statistics</h3>
+                <p><strong>Total Vessels:</strong> {total_ships}</p>
+                <p><strong>Moving Vessels:</strong> {moving_ships}</p>
+                <p><strong>Avg Speed:</strong> {avg_speed:.1f} knots</p>
+                <p><strong>Cargo Value:</strong> ${total_cargo}M</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Ships Data Table
+        st.markdown("### 🚢 Active Vessels")
+        if ships_data:
+            df = pd.DataFrame(ships_data)
+            st.dataframe(df[['Name', 'Type', 'Company', 'Speed', 'Status', 'Cargo_Value_M', 'Timestamp']], 
+                        use_container_width=True)
+        else:
+            st.info("No vessel data available for this port.")
+        
+        # Anomaly Detection
+        anomalies = self.predictive_ai.detect_anomalies(ships_data)
+        if anomalies:
+            st.markdown("### ⚠️ AI Anomaly Detection")
+            for anomaly in anomalies:
+                st.warning(f"**{anomaly['type']}** - {anomaly['message']} ({anomaly['timestamp']})")
+    
+    def satellite_network_view(self):
+        """Premium satellite network visualization"""
+        st.markdown("""
+        <div style='text-align: center; margin: 3rem 0 2rem 0;'>
+            <h2>🛰️ Global Satellite Network</h2>
+            <p style='color: #a0a0c0;'>Real-time data flow and communication network</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Add the satellite network animation
+        self.animations.create_satellite_network()
+        
+        # Satellite Metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown("""
+            <div class='metric-card'>
+                <h4 style='color: #667eea; margin: 0;'>Active Satellites</h4>
+                <h2 style='color: #fff; margin: 0.5rem 0;'>42</h2>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div class='metric-card'>
+                <h4 style='color: #667eea; margin: 0;'>Data Flow</h4>
+                <h2 style='color: #fff; margin: 0.5rem 0;'>2.4 GB/s</h2>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div class='metric-card'>
+                <h4 style='color: #667eea; margin: 0;'>Uptime</h4>
+                <h2 style='color: #fff; margin: 0.5rem 0;'>99.98%</h2>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown("""
+            <div class='metric-card'>
+                <h4 style='color: #667eea; margin: 0;'>Coverage</h4>
+                <h2 style='color: #fff; margin: 0.5rem 0;'>Global</h2>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    def analytics_dashboard(self):
+        """Advanced analytics with interactive visualizations"""
+        st.markdown("""
+        <div style='text-align: center; margin: 3rem 0 2rem 0;'>
+            <h2>📈 Advanced Analytics</h2>
+            <p style='color: #a0a0c0;'>AI-powered insights and predictive analytics</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Ship Type Distribution
+            ships_data = self.port_system.get_port_ships(st.session_state.selected_port)
+            if ships_data:
+                ship_types = [ship['Type'] for ship in ships_data]
+                type_counts = pd.Series(ship_types).value_counts()
+                
+                fig = px.pie(
+                    values=type_counts.values,
+                    names=type_counts.index,
+                    title="🚢 Vessel Type Distribution",
+                    color_discrete_sequence=px.colors.sequential.Blues_r
+                )
+                fig.update_traces(textposition='inside', textinfo='percent+label')
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Cargo Value by Company
+            if ships_data:
+                company_data = {}
+                for ship in ships_data:
+                    company = ship['Company']
+                    value = ship['Cargo_Value_M']
+                    if company in company_data:
+                        company_data[company] += value
+                    else:
+                        company_data[company] = value
+                
+                fig = px.bar(
+                    x=list(company_data.keys()),
+                    y=list(company_data.values()),
+                    title="💰 Cargo Value by Shipping Company",
+                    labels={'x': 'Company', 'y': 'Cargo Value (M$)'},
+                    color=list(company_data.values()),
+                    color_continuous_scale='Viridis'
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+        # Time Series Analysis
+        st.markdown("### 📊 Port Activity Timeline")
+        
+        # Generate sample time series data
+        hours = list(range(24))
+        activity_levels = [max(0, min(100, 50 + 30 * np.sin(h/24 * 2 * np.pi) + np.random.normal(0, 10))) for h in hours]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=hours,
+            y=activity_levels,
+            mode='lines+markers',
+            name='Port Activity',
+            line=dict(color='#667eea', width=3),
+            marker=dict(size=6)
+        ))
+        
+        fig.update_layout(
+            title="24-Hour Port Activity Forecast",
+            xaxis_title="Hour of Day",
+            yaxis_title="Activity Level (%)",
+            template="plotly_dark",
+            height=400
         )
         
-        # AI Settings
-        st.sidebar.subheader("AI Settings")
-        enable_predictions = st.sidebar.checkbox("Enable AI Predictions", True)
-        alert_threshold = st.sidebar.slider("Alert Sensitivity", 1, 10, 7)
-        
-        # Theme settings
-        st.sidebar.subheader("Display")
-        theme = st.sidebar.selectbox("Theme", ["Light", "Dark"])
-        
-        # Logout
-        if st.sidebar.button("🚪 Logout"):
-            st.session_state.authenticated = False
-            st.rerun()
+        st.plotly_chart(fig, use_container_width=True)
     
-    def show_business_metrics(self):
-        """Business metrics cards"""
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        total_value = sum(ship.get('Cargo_Value_M', 0) for ship in ships_data)
+    def business_intelligence(self):
+        """Business intelligence dashboard"""
+        st.markdown("""
+        <div style='text-align: center; margin: 3rem 0 2rem 0;'>
+            <h2>💼 Business Intelligence</h2>
+            <p style='color: #a0a0c0;'>ROI Analysis and Strategic Insights</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Active Vessels", len(ships_data), "Live")
-        st.markdown('</div>', unsafe_allow_html=True)
+        ships_data = self.port_system.get_port_ships(st.session_state.selected_port)
         
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Cargo Value", f"${total_value}M", "+12%")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    def show_ai_predictions(self):
-        """AI prediction cards"""
-        congestion_pred = self.predictive_ai.predict_port_congestion(self.current_port)
+        # ROI Calculator
+        st.markdown("#### 💰 ROI Calculator")
+        efficiency_improvement = st.slider(
+            "Expected Efficiency Improvement", 
+            0.05, 0.30, 0.15, 0.05,
+            help="Expected improvement in port efficiency using SkyWatch AI"
+        )
         
-        st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-        st.metric("Port Congestion", f"{congestion_pred['congestion_level']*100:.0f}%")
-        st.write(f"Trend: {congestion_pred['trend'].title()}")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    def show_port_efficiency(self):
-        """Port efficiency metrics"""
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.metric("Port Efficiency", "87%", "+5%")
-        st.metric("Avg Turnaround", "18h", "-2h")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    def show_risk_alerts(self):
-        """Risk and alert cards"""
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        anomalies = self.predictive_ai.detect_anomalies(ships_data)
+        roi_data = self.business_intel.calculate_roi(efficiency_improvement)
         
-        st.markdown('<div class="alert-card">', unsafe_allow_html=True)
-        st.metric("Active Alerts", len(anomalies))
-        if anomalies:
-            st.write(f"Latest: {anomalies[0]['type']}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Daily Savings", roi_data['daily_savings'])
+        with col2:
+            st.metric("Annual Savings", roi_data['annual_savings'])
+        with col3:
+            st.metric("Efficiency Gain", roi_data['efficiency_gain'])
+        with col4:
+            st.metric("ROI", roi_data['roi'])
+        
+        # Executive Summary
+        st.markdown("#### 📋 Executive Summary")
+        exec_summary = self.business_intel.generate_executive_summary(
+            st.session_state.selected_port, ships_data
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Total Vessels", exec_summary['total_vessels'])
+            st.metric("Total Cargo Value", exec_summary['total_cargo_value'])
+        with col2:
+            st.metric("Port Efficiency", exec_summary['port_efficiency'])
+            st.metric("Risk Level", exec_summary['risk_level'])
+        
+        st.markdown("#### 💡 Strategic Recommendations")
+        for i, recommendation in enumerate(exec_summary['recommendations'], 1):
+            st.write(f"{i}. {recommendation}")
     
     def show_global_real_time_map(self):
-        """Show real-time global map with all active ships"""
-        st.subheader("🌍 Global Real-Time Shipping Network")
+        """Enhanced global real-time map with all features"""
+        st.markdown("""
+        <div style='text-align: center; margin: 2rem 0;'>
+            <h2>🌍 Global Real-Time Shipping Network</h2>
+            <p style='color: #a0a0c0;'>Live vessel tracking across all major ports worldwide</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Create a massive dataset of ships across all ports
         all_ships = []
@@ -1121,7 +1429,7 @@ class SkyWatchEnterprise:
             fig.update_layout(
                 mapbox_style="dark",
                 mapbox=dict(
-                    accesstoken=None,  # You can add Mapbox token for better styling
+                    accesstoken=None,
                     center=dict(lat=20, lon=0),
                     zoom=1
                 ),
@@ -1139,7 +1447,7 @@ class SkyWatchEnterprise:
             st.plotly_chart(fig, use_container_width=True)
             
             # Global statistics
-            st.subheader("📊 Global Shipping Intelligence")
+            st.markdown("### 📊 Global Shipping Intelligence")
             
             col1, col2, col3, col4 = st.columns(4)
             
@@ -1158,686 +1466,68 @@ class SkyWatchEnterprise:
             with col4:
                 container_ships = len([s for s in all_ships if s.get('Type') == 'Container'])
                 st.metric("Container Ships", f"{container_ships:,}")
-            
-            # Regional breakdown
-            st.subheader("🌐 Regional Distribution")
-            
-            regional_data = {}
-            for ship in all_ships:
-                port = ship.get('Port', 'Unknown')
-                if port in self.port_system.ports:
-                    region = self.port_system.ports[port].get('region', 'Unknown')
-                    regional_data[region] = regional_data.get(region, 0) + 1
-            
-            # Create regional chart
-            fig_regional = px.pie(
-                values=list(regional_data.values()),
-                names=list(regional_data.keys()),
-                title="Vessels by Region"
-            )
-            st.plotly_chart(fig_regional, use_container_width=True)
-            
-            # Real-time ship table
-            st.subheader("📋 Live Vessel Feed")
-            
-            # Show most recent ships
-            display_data = []
-            for ship in all_ships[:20]:  # Show first 20 ships
-                display_data.append({
-                    'Vessel': ship['Name'],
-                    'Type': ship['Type'],
-                    'Company': ship['Company'],
-                    'Port': ship['Port'],
-                    'Speed': f"{ship['Speed']} knots",
-                    'Cargo Value': f"${ship['Cargo_Value_M']}M",
-                    'Status': ship['Status'],
-                    'Last Update': ship['Timestamp']
-                })
-            
-            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
-            
-        else:
-            st.warning("No ship data available. Please check the data sources.")
     
-    def show_global_overview(self):
-        """Global overview with real-time world map"""
+    def run_enterprise_dashboard(self):
+        """Main enterprise dashboard"""
+        # Add cosmic background
+        self.animations.create_cosmic_starfield()
         
-        tab1, tab2, tab3 = st.tabs(["🗺️ Live World Map", "📡 Satellite Network", "📊 Port Analytics"])
+        # Add premium styles
+        self.add_premium_styles()
+        
+        if not st.session_state.authenticated:
+            self.login_page()
+            return
+        
+        # Main Dashboard
+        self.dashboard_header()
+        
+        # Navigation
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            "🌍 Global Overview", 
+            "🏢 Port Monitoring", 
+            "🛰️ Satellite Network", 
+            "📈 Analytics",
+            "💼 Business Intelligence"
+        ])
         
         with tab1:
-            st.subheader("🌍 Global Real-Time Shipping Network")
+            self.global_overview()
+            self.show_global_real_time_map()
             
-            # Create a massive dataset of ships across all ports
-            all_ships = []
-            for port_name in self.port_system.ports.keys():
-                port_ships = self.port_system.get_port_ships(port_name)
-                all_ships.extend(port_ships)
-            
-            if all_ships:
-                all_ships_df = pd.DataFrame(all_ships)
-                
-                # Create unique color mapping for ship types
-                ship_type_colors = {
-                    'Container': '#FF6B6B',
-                    'Tanker': '#4ECDC4', 
-                    'Bulk Carrier': '#45B7D1',
-                    'Cargo': '#96CEB4',
-                    'Ro-Ro': '#FFEAA7',
-                    'Vehicle Carrier': '#DDA0DD',
-                    'General Cargo': '#98D8C8'
-                }
-                
-                # Create the global map with open-street-map (no token needed)
-                fig = px.scatter_mapbox(
-                    all_ships_df,
-                    lat="Latitude",
-                    lon="Longitude",
-                    hover_name="Name",
-                    hover_data={
-                        "Type": True,
-                        "Company": True,
-                        "Speed": True,
-                        "Port": True,
-                        "Cargo_Value_M": True,
-                        "Timestamp": True
-                    },
-                    color="Type",
-                    color_discrete_map=ship_type_colors,
-                    zoom=1,
-                    height=600,
-                    title="🚢 LIVE GLOBAL SHIPPING NETWORK - Real-Time Vessel Tracking"
-                )
-                
-                # Add port locations as larger points
-                port_df = pd.DataFrame([
-                    {
-                        'Port': name, 
-                        'Latitude': data['lat'], 
-                        'Longitude': data['lon'], 
-                        'Country': data['country'],
-                        'Volume': data['volume'],
-                        'Size': 20 if data['volume'] in ['Very High', 'High'] else 15
-                    }
-                    for name, data in self.port_system.ports.items()
-                ])
-                
-                # Add ports to the map as a separate trace
-                fig.add_trace(
-                    go.Scattermapbox(
-                        lat=port_df["Latitude"],
-                        lon=port_df["Longitude"],
-                        mode='markers',
-                        marker=dict(
-                            size=port_df["Size"],
-                            color='red',
-                            opacity=0.7
-                        ),
-                        text=port_df["Port"],
-                        hoverinfo='text',
-                        name="Ports"
-                    )
-                )
-                
-                # Use open-street-map to avoid token issues
-                fig.update_layout(
-                    mapbox_style="open-street-map",
-                    mapbox=dict(
-                        center=dict(lat=20, lon=0),
-                        zoom=1
-                    ),
-                    showlegend=True,
-                    legend=dict(
-                        yanchor="top",
-                        y=0.99,
-                        xanchor="left",
-                        x=0.01,
-                        bgcolor="rgba(255,255,255,0.8)"
-                    ),
-                    margin={"r":0,"t":50,"l":0,"b":0},
-                    height=600
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # Global statistics
-                st.subheader("📊 Global Shipping Intelligence")
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    total_ships = len(all_ships)
-                    st.metric("Total Active Vessels", f"{total_ships:,}")
-                
-                with col2:
-                    total_value = sum(ship.get('Cargo_Value_M', 0) for ship in all_ships)
-                    st.metric("Total Cargo Value", f"${total_value:,.0f}M")
-                
-                with col3:
-                    avg_speed = np.mean([ship.get('Speed', 0) for ship in all_ships])
-                    st.metric("Avg Speed", f"{avg_speed:.1f} knots")
-                
-                with col4:
-                    container_ships = len([s for s in all_ships if s.get('Type') == 'Container'])
-                    st.metric("Container Ships", f"{container_ships:,}")
-                
-                # Regional breakdown
-                st.subheader("🌐 Regional Distribution")
-                
-                regional_data = {}
-                for ship in all_ships:
-                    port = ship.get('Port', 'Unknown')
-                    if port in self.port_system.ports:
-                        region = self.port_system.ports[port].get('region', 'Unknown')
-                        regional_data[region] = regional_data.get(region, 0) + 1
-                
-                # Create regional chart
-                if regional_data:
-                    fig_regional = px.pie(
-                        values=list(regional_data.values()),
-                        names=list(regional_data.keys()),
-                        title="Vessels by Region"
-                    )
-                    st.plotly_chart(fig_regional, use_container_width=True)
-                
-                # Real-time ship table
-                st.subheader("📋 Live Vessel Feed")
-                
-                # Show most recent ships
-                display_data = []
-                for ship in all_ships[:20]:  # Show first 20 ships
-                    display_data.append({
-                        'Vessel': ship['Name'],
-                        'Type': ship['Type'],
-                        'Company': ship['Company'],
-                        'Port': ship['Port'],
-                        'Speed': f"{ship['Speed']} knots",
-                        'Cargo Value': f"${ship['Cargo_Value_M']}M",
-                        'Status': ship['Status'],
-                        'Last Update': ship['Timestamp']
-                    })
-                
-                st.dataframe(pd.DataFrame(display_data), use_container_width=True)
-                
-            else:
-                st.warning("No ship data available. Please check the data sources.")
-        
         with tab2:
-            st.subheader("🛰️ Global Satellite Network")
+            self.port_monitoring()
             
-            # Enhanced satellite network with better visibility
-            satellite_html = """
-            <div style="text-align: center; margin: 1rem 0;">
-                <div style="position: relative; width: 100%; height: 400px; background: linear-gradient(135deg, #0c0c2e 0%, #1a1a3e 100%); 
-                    border-radius: 15px; overflow: hidden; border: 2px solid rgba(102, 126, 234, 0.5); box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                    <canvas id="satelliteNetwork" style="width: 100%; height: 100%;"></canvas>
-                </div>
-                <div style="margin-top: 1rem; color: #667eea; font-weight: bold;">
-                    🌐 LIVE SATELLITE NETWORK • REAL-TIME DATA TRANSMISSION
-                </div>
-            </div>
-            
-            <script>
-                class SatelliteNetwork {
-                    constructor() {
-                        this.canvas = document.getElementById('satelliteNetwork');
-                        this.ctx = this.canvas.getContext('2d');
-                        this.satellites = [];
-                        this.connections = [];
-                        this.dataPackets = [];
-                        
-                        this.init();
-                    }
-                    
-                    init() {
-                        this.resize();
-                        this.createSatellites();
-                        this.createConnections();
-                        this.animate();
-                        
-                        window.addEventListener('resize', () => this.resize());
-                    }
-                    
-                    resize() {
-                        this.canvas.width = this.canvas.offsetWidth;
-                        this.canvas.height = this.canvas.offsetHeight;
-                        this.satellites = [];
-                        this.connections = [];
-                        this.createSatellites();
-                        this.createConnections();
-                    }
-                    
-                    createSatellites() {
-                        const satelliteCount = 12;
-                        const padding = 100;
-                        
-                        for (let i = 0; i < satelliteCount; i++) {
-                            const angle = (i / satelliteCount) * Math.PI * 2;
-                            const radius = Math.min(this.canvas.width, this.canvas.height) / 2 - padding;
-                            
-                            this.satellites.push({
-                                x: this.canvas.width / 2 + Math.cos(angle) * radius,
-                                y: this.canvas.height / 2 + Math.sin(angle) * radius,
-                                size: 10,
-                                orbitSpeed: 0.0003 + Math.random() * 0.0003,
-                                orbitAngle: angle,
-                                orbitRadius: radius,
-                                color: this.getSatelliteColor(),
-                                pulsePhase: Math.random() * Math.PI * 2
-                            });
-                        }
-                        
-                        // Add central hub
-                        this.satellites.push({
-                            x: this.canvas.width / 2,
-                            y: this.canvas.height / 2,
-                            size: 15,
-                            orbitSpeed: 0,
-                            orbitAngle: 0,
-                            orbitRadius: 0,
-                            color: '#ff6b6b',
-                            pulsePhase: 0
-                        });
-                    }
-                    
-                    createConnections() {
-                        // Connect satellites to central hub
-                        for (let i = 0; i < this.satellites.length - 1; i++) {
-                            this.connections.push({
-                                from: i,
-                                to: this.satellites.length - 1,
-                                strength: 0.8,
-                                dataFlow: Math.random() * 0.03 + 0.01
-                            });
-                        }
-                        
-                        // Connect some satellites to each other
-                        for (let i = 0; i < this.satellites.length - 1; i++) {
-                            for (let j = i + 1; j < this.satellites.length - 1; j++) {
-                                if (Math.random() > 0.6) {
-                                    this.connections.push({
-                                        from: i,
-                                        to: j,
-                                        strength: 0.4,
-                                        dataFlow: Math.random() * 0.02 + 0.005
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    
-                    getSatelliteColor() {
-                        const colors = ['#667eea', '#764ba2', '#f093fb', '#4fc3f7', '#81c784', '#fff176', '#ff6b6b', '#45b7d1'];
-                        return colors[Math.floor(Math.random() * colors.length)];
-                    }
-                    
-                    animate() {
-                        // Clear with gradient background
-                        const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
-                        gradient.addColorStop(0, 'rgba(12, 12, 46, 0.8)');
-                        gradient.addColorStop(1, 'rgba(26, 26, 62, 0.8)');
-                        this.ctx.fillStyle = gradient;
-                        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                        
-                        this.updateSatellites();
-                        this.drawConnections();
-                        this.drawSatellites();
-                        this.drawDataFlow();
-                        
-                        requestAnimationFrame(() => this.animate());
-                    }
-                    
-                    updateSatellites() {
-                        this.satellites.forEach((sat, index) => {
-                            if (sat.orbitSpeed > 0) {
-                                sat.orbitAngle += sat.orbitSpeed;
-                                sat.x = this.canvas.width / 2 + Math.cos(sat.orbitAngle) * sat.orbitRadius;
-                                sat.y = this.canvas.height / 2 + Math.sin(sat.orbitAngle) * sat.orbitRadius;
-                            }
-                            
-                            sat.pulsePhase += 0.03;
-                        });
-                    }
-                    
-                    drawConnections() {
-                        this.connections.forEach(conn => {
-                            const from = this.satellites[conn.from];
-                            const to = this.satellites[conn.to];
-                            
-                            // Animated connection line
-                            const gradient = this.ctx.createLinearGradient(from.x, from.y, to.x, to.y);
-                            gradient.addColorStop(0, `${from.color}66`);
-                            gradient.addColorStop(1, `${to.color}66`);
-                            
-                            this.ctx.strokeStyle = gradient;
-                            this.ctx.lineWidth = 1.5;
-                            this.ctx.setLineDash([5, 5]);
-                            this.ctx.beginPath();
-                            this.ctx.moveTo(from.x, from.y);
-                            this.ctx.lineTo(to.x, to.y);
-                            this.ctx.stroke();
-                            this.ctx.setLineDash([]);
-                            
-                            // Occasionally send data packets
-                            if (Math.random() < conn.dataFlow) {
-                                this.createDataPacket(conn.from, conn.to);
-                            }
-                        });
-                    }
-                    
-                    drawSatellites() {
-                        this.satellites.forEach(satellite => {
-                            const pulse = Math.sin(satellite.pulsePhase) * 0.4 + 0.6;
-                            
-                            // Satellite glow
-                            const gradient = this.ctx.createRadialGradient(
-                                satellite.x, satellite.y, 0,
-                                satellite.x, satellite.y, satellite.size * 5
-                            );
-                            gradient.addColorStop(0, `${satellite.color}${Math.floor(pulse * 150).toString(16).padStart(2, '0')}`);
-                            gradient.addColorStop(0.7, `${satellite.color}33`);
-                            gradient.addColorStop(1, `${satellite.color}00`);
-                            
-                            this.ctx.fillStyle = gradient;
-                            this.ctx.beginPath();
-                            this.ctx.arc(satellite.x, satellite.y, satellite.size * 5, 0, Math.PI * 2);
-                            this.ctx.fill();
-                            
-                            // Satellite body
-                            this.ctx.fillStyle = satellite.color;
-                            this.ctx.beginPath();
-                            this.ctx.arc(satellite.x, satellite.y, satellite.size, 0, Math.PI * 2);
-                            this.ctx.fill();
-                            
-                            // Satellite details
-                            this.ctx.strokeStyle = '#ffffff';
-                            this.ctx.lineWidth = 1;
-                            this.ctx.beginPath();
-                            this.ctx.arc(satellite.x, satellite.y, satellite.size * 0.6, 0, Math.PI * 2);
-                            this.ctx.stroke();
-                        });
-                    }
-                    
-                    drawDataFlow() {
-                        // Update and draw data packets
-                        for (let i = this.dataPackets.length - 1; i >= 0; i--) {
-                            const packet = this.dataPackets[i];
-                            const from = this.satellites[packet.from];
-                            const to = this.satellites[packet.to];
-                            
-                            packet.progress += 0.015;
-                            
-                            if (packet.progress >= 1) {
-                                this.dataPackets.splice(i, 1);
-                                continue;
-                            }
-                            
-                            // Calculate current position
-                            const currentX = from.x + (to.x - from.x) * packet.progress;
-                            const currentY = from.y + (to.y - from.y) * packet.progress;
-                            
-                            // Draw data packet
-                            this.ctx.fillStyle = `rgba(102, 126, 234, ${1 - packet.progress * 0.7})`;
-                            this.ctx.beginPath();
-                            this.ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
-                            this.ctx.fill();
-                            
-                            // Draw packet trail
-                            this.ctx.strokeStyle = `rgba(102, 126, 234, ${0.4 * (1 - packet.progress)})`;
-                            this.ctx.lineWidth = 2;
-                            this.ctx.beginPath();
-                            this.ctx.moveTo(from.x, from.y);
-                            this.ctx.lineTo(currentX, currentY);
-                            this.ctx.stroke();
-                        }
-                    }
-                    
-                    createDataPacket(fromIndex, toIndex) {
-                        this.dataPackets.push({
-                            from: fromIndex,
-                            to: toIndex,
-                            progress: 0
-                        });
-                    }
-                }
-                
-                // Initialize satellite network when tab is visible
-                let satelliteInstance = null;
-                
-                function initSatelliteNetwork() {
-                    if (satelliteInstance) return;
-                    satelliteInstance = new SatelliteNetwork();
-                }
-                
-                // Initialize when tab is clicked or page loads
-                setTimeout(initSatelliteNetwork, 100);
-                
-                // Reinitialize on tab click
-                document.addEventListener('click', function() {
-                    setTimeout(initSatelliteNetwork, 50);
-                });
-            </script>
-            """
-            components.html(satellite_html, height=450)
-            
-            # Satellite status
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Active Satellites", "12", "Online")
-            with col2:
-                st.metric("Data Flow", "2.4 GB/s", "Optimal")
-            with col3:
-                st.metric("Coverage", "98.7%", "Global")
-            
-            # Port comparison table
-            st.subheader("🏆 Top Global Ports by Activity")
-            comparison_data = []
-            top_ports = list(self.port_system.ports.keys())[:8]  # Show top 8 ports
-            for port_name in top_ports:
-                ships = self.port_system.get_port_ships(port_name)
-                port_data = self.port_system.ports[port_name]
-                comparison_data.append({
-                    'Port': port_name,
-                    'Country': port_data['country'],
-                    'Region': port_data['region'],
-                    'Active Vessels': len(ships),
-                    'Traffic Volume': port_data['volume'],
-                    'Avg Cargo Value': f"${np.mean([s.get('Cargo_Value_M', 0) for s in ships]):.1f}M"
-                })
-            
-            st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
-        
         with tab3:
-            st.subheader("📈 Global Port Performance")
+            self.satellite_network_view()
             
-            # Create performance metrics
-            metrics_data = []
-            for port_name, port_data in list(self.port_system.ports.items())[:12]:
-                ships = self.port_system.get_port_ships(port_name)
-                metrics_data.append({
-                    'Port': port_name,
-                    'Region': port_data['region'],
-                    'Efficiency': f"{np.random.uniform(65, 95):.1f}%",
-                    'Congestion': f"{np.random.uniform(10, 80):.1f}%",
-                    'Ships Today': len(ships),
-                    'Avg Turnaround': f"{np.random.uniform(12, 48):.0f}h",
-                    'Volume Tier': port_data['volume']
-                })
+        with tab4:
+            self.analytics_dashboard()
             
-            st.dataframe(pd.DataFrame(metrics_data), use_container_width=True)
-    
-    def show_live_tracking(self):
-        """Live ship tracking"""
-        st.subheader(f"🚢 Live Vessel Tracking - {self.current_port}")
+        with tab5:
+            self.business_intelligence()
         
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        
-        if ships_data:
-            ships_df = pd.DataFrame(ships_data)
-            
-            # Interactive map
-            fig = px.scatter_mapbox(
-                ships_df,
-                lat="Latitude",
-                lon="Longitude",
-                hover_name="Name",
-                hover_data=["Type", "Company", "Speed", "Status"],
-                color="Type",
-                zoom=12,
-                height=600,
-                title=f"Live Vessels - {self.current_port}"
-            )
-            fig.update_layout(mapbox_style="open-street-map")
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Vessel details
-            st.subheader("📋 Vessel Details")
-            display_cols = ['Name', 'Company', 'Type', 'Speed', 'Status', 'Cargo_Value_M']
-            st.dataframe(ships_df[display_cols], use_container_width=True)
-    
-    def show_analytics_dashboard(self):
-        """Advanced analytics dashboard"""
-        st.subheader("📈 Advanced Analytics")
-        
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        ships_df = pd.DataFrame(ships_data)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Ship type distribution
-            if not ships_df.empty:
-                type_counts = ships_df['Type'].value_counts()
-                fig_pie = px.pie(
-                    values=type_counts.values, 
-                    names=type_counts.index,
-                    title="Vessel Type Distribution"
-                )
-                st.plotly_chart(fig_pie, use_container_width=True)
-        
-        with col2:
-            # Company distribution
-            if not ships_df.empty:
-                company_counts = ships_df['Company'].value_counts()
-                fig_bar = px.bar(
-                    x=company_counts.values,
-                    y=company_counts.index,
-                    orientation='h',
-                    title="Shipping Companies"
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
-        
-        # Time series simulation
-        st.subheader("⏱️ Port Activity Timeline")
-        hours = list(range(24))
-        activity = [max(5, int(20 * (0.5 + 0.5 * np.sin(h/24 * 2 * np.pi)))) for h in hours]
-        
-        fig_line = px.line(
-            x=hours, y=activity,
-            title="24-Hour Port Activity Pattern",
-            labels={'x': 'Hour of Day', 'y': 'Vessels in Port'}
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-    
-    def show_ai_insights(self):
-        """AI-powered insights"""
-        st.subheader("🤖 AI Predictive Insights")
-        
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### 📊 Port Congestion Forecast")
-            congestion = self.predictive_ai.predict_port_congestion(self.current_port)
-            
-            st.metric("Current Level", f"{congestion['congestion_level']*100:.0f}%")
-            st.metric("Trend", congestion['trend'].title())
-            st.write(f"**Recommendation:** {congestion['recommendation']}")
-            st.write(f"**Peak Hours:** {', '.join(congestion['peak_hours'])}")
-        
-        with col2:
-            st.markdown("#### 🚨 Anomaly Detection")
-            anomalies = self.predictive_ai.detect_anomalies(ships_data)
-            
-            if anomalies:
-                for anomaly in anomalies[:3]:  # Show top 3
-                    st.warning(f"**{anomaly['type']}** - {anomaly['message']}")
-            else:
-                st.success("✅ No anomalies detected")
-        
-        # ETA Predictions for sample ships
-        st.markdown("#### ⏰ Arrival Predictions")
-        if ships_data:
-            sample_ships = ships_data[:3]  # Show predictions for first 3 ships
-            for ship in sample_ships:
-                eta_pred = self.predictive_ai.predict_ship_eta(ship, self.current_port)
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.write(f"**{ship['Name']}**")
-                with col2:
-                    st.write(f"ETA: {eta_pred['eta']}")
-                with col3:
-                    st.write(f"Confidence: {eta_pred['confidence']}%")
-    
-    def show_business_intelligence(self):
-        """Business intelligence dashboard"""
-        st.subheader("💼 Business Intelligence")
-        
-        ships_data = self.port_system.get_port_ships(self.current_port)
-        
-        # ROI Calculator
-        st.markdown("#### 💰 ROI Calculator")
-        efficiency_improvement = st.slider(
-            "Expected Efficiency Improvement", 
-            0.05, 0.30, 0.15, 0.05,
-            help="Expected improvement in port efficiency using SkyWatch AI"
-        )
-        
-        roi_data = self.business_intel.calculate_roi(efficiency_improvement)
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Daily Savings", roi_data['daily_savings'])
-        with col2:
-            st.metric("Annual Savings", roi_data['annual_savings'])
-        with col3:
-            st.metric("Efficiency Gain", roi_data['efficiency_gain'])
-        with col4:
-            st.metric("ROI", roi_data['roi'])
-        
-        # Executive Summary
-        st.markdown("#### 📋 Executive Summary")
-        exec_summary = self.business_intel.generate_executive_summary(
-            self.current_port, ships_data
-        )
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Total Vessels", exec_summary['total_vessels'])
-            st.metric("Total Cargo Value", exec_summary['total_cargo_value'])
-        with col2:
-            st.metric("Port Efficiency", exec_summary['port_efficiency'])
-            st.metric("Risk Level", exec_summary['risk_level'])
-        
-        st.markdown("#### 💡 Strategic Recommendations")
-        for i, recommendation in enumerate(exec_summary['recommendations'], 1):
-            st.write(f"{i}. {recommendation}")
+        # Auto-refresh functionality
+        if st.session_state.auto_refresh:
+            time.sleep(5)
+            st.rerun()
 
 # =============================================================================
-# RUN THE ENTERPRISE APPLICATION WITH PREMIUM ANIMATIONS
+# APPLICATION ENTRY POINT
 # =============================================================================
 
 def main():
-    # Initialize premium animations
-    premium_animations = PremiumCanvasAnimations()
+    # Configure page
+    st.set_page_config(
+        page_title="SkyWatch AI Enterprise",
+        page_icon="🌌",
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
     
-    # Add cosmic starfield background
-    premium_animations.create_cosmic_starfield()
-    
-    # Run enterprise dashboard
-    enterprise_app = SkyWatchEnterprise()
-    enterprise_app.run_enterprise_dashboard()
+    # Initialize and run application
+    app = SkyWatchAIEnterprise()
+    app.run_enterprise_dashboard()
 
 if __name__ == "__main__":
     main()
