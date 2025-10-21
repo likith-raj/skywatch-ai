@@ -1200,50 +1200,470 @@ class SkyWatchEnterprise:
             st.warning("No ship data available. Please check the data sources.")
     
     def show_global_overview(self):
-        """Global overview with real-time world map"""
+    """Global overview with real-time world map"""
+    
+    tab1, tab2, tab3 = st.tabs(["🗺️ Live World Map", "📡 Satellite Network", "📊 Port Analytics"])
+    
+    with tab1:
+        st.subheader("🌍 Global Real-Time Shipping Network")
         
-        tab1, tab2, tab3 = st.tabs(["🗺️ Live World Map", "📡 Satellite Network", "📊 Port Analytics"])
+        # Create a massive dataset of ships across all ports
+        all_ships = []
+        for port_name in self.port_system.ports.keys():
+            port_ships = self.port_system.get_port_ships(port_name)
+            all_ships.extend(port_ships)
         
-        with tab1:
-            self.show_global_real_time_map()
-        
-        with tab2:
-            # Keep your existing satellite network
-            self.animations.create_satellite_network()
+        if all_ships:
+            all_ships_df = pd.DataFrame(all_ships)
             
-            # Port comparison table
-            st.subheader("🏆 Top Global Ports by Activity")
-            comparison_data = []
-            for port_name in list(self.port_system.ports.keys())[:10]:
-                ships = self.port_system.get_port_ships(port_name)
-                port_data = self.port_system.ports[port_name]
-                comparison_data.append({
-                    'Port': port_name,
-                    'Country': port_data['country'],
-                    'Region': port_data['region'],
-                    'Active Vessels': len(ships),
-                    'Traffic Volume': port_data['volume'],
-                    'Avg Cargo Value': f"${np.mean([s.get('Cargo_Value_M', 0) for s in ships]):.1f}M"
+            # Create unique color mapping for ship types
+            ship_type_colors = {
+                'Container': '#FF6B6B',
+                'Tanker': '#4ECDC4', 
+                'Bulk Carrier': '#45B7D1',
+                'Cargo': '#96CEB4',
+                'Ro-Ro': '#FFEAA7',
+                'Vehicle Carrier': '#DDA0DD',
+                'General Cargo': '#98D8C8'
+            }
+            
+            # Create the global map with open-street-map (no token needed)
+            fig = px.scatter_mapbox(
+                all_ships_df,
+                lat="Latitude",
+                lon="Longitude",
+                hover_name="Name",
+                hover_data={
+                    "Type": True,
+                    "Company": True,
+                    "Speed": True,
+                    "Port": True,
+                    "Cargo_Value_M": True,
+                    "Timestamp": True
+                },
+                color="Type",
+                color_discrete_map=ship_type_colors,
+                zoom=1,
+                height=600,
+                title="🚢 LIVE GLOBAL SHIPPING NETWORK - Real-Time Vessel Tracking"
+            )
+            
+            # Add port locations as larger points
+            port_df = pd.DataFrame([
+                {
+                    'Port': name, 
+                    'Latitude': data['lat'], 
+                    'Longitude': data['lon'], 
+                    'Country': data['country'],
+                    'Volume': data['volume'],
+                    'Size': 20 if data['volume'] in ['Very High', 'High'] else 15
+                }
+                for name, data in self.port_system.ports.items()
+            ])
+            
+            # Add ports to the map as a separate trace
+            fig.add_trace(
+                go.Scattermapbox(
+                    lat=port_df["Latitude"],
+                    lon=port_df["Longitude"],
+                    mode='markers',
+                    marker=dict(
+                        size=port_df["Size"],
+                        color='red',
+                        opacity=0.7
+                    ),
+                    text=port_df["Port"],
+                    hoverinfo='text',
+                    name="Ports"
+                )
+            )
+            
+            # Use open-street-map to avoid token issues
+            fig.update_layout(
+                mapbox_style="open-street-map",
+                mapbox=dict(
+                    center=dict(lat=20, lon=0),
+                    zoom=1
+                ),
+                showlegend=True,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01,
+                    bgcolor="rgba(255,255,255,0.8)"
+                ),
+                margin={"r":0,"t":50,"l":0,"b":0},
+                height=600
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Global statistics
+            st.subheader("📊 Global Shipping Intelligence")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_ships = len(all_ships)
+                st.metric("Total Active Vessels", f"{total_ships:,}")
+            
+            with col2:
+                total_value = sum(ship.get('Cargo_Value_M', 0) for ship in all_ships)
+                st.metric("Total Cargo Value", f"${total_value:,.0f}M")
+            
+            with col3:
+                avg_speed = np.mean([ship.get('Speed', 0) for ship in all_ships])
+                st.metric("Avg Speed", f"{avg_speed:.1f} knots")
+            
+            with col4:
+                container_ships = len([s for s in all_ships if s.get('Type') == 'Container'])
+                st.metric("Container Ships", f"{container_ships:,}")
+            
+            # Regional breakdown
+            st.subheader("🌐 Regional Distribution")
+            
+            regional_data = {}
+            for ship in all_ships:
+                port = ship.get('Port', 'Unknown')
+                if port in self.port_system.ports:
+                    region = self.port_system.ports[port].get('region', 'Unknown')
+                    regional_data[region] = regional_data.get(region, 0) + 1
+            
+            # Create regional chart
+            if regional_data:
+                fig_regional = px.pie(
+                    values=list(regional_data.values()),
+                    names=list(regional_data.keys()),
+                    title="Vessels by Region"
+                )
+                st.plotly_chart(fig_regional, use_container_width=True)
+            
+            # Real-time ship table
+            st.subheader("📋 Live Vessel Feed")
+            
+            # Show most recent ships
+            display_data = []
+            for ship in all_ships[:20]:  # Show first 20 ships
+                display_data.append({
+                    'Vessel': ship['Name'],
+                    'Type': ship['Type'],
+                    'Company': ship['Company'],
+                    'Port': ship['Port'],
+                    'Speed': f"{ship['Speed']} knots",
+                    'Cargo Value': f"${ship['Cargo_Value_M']}M",
+                    'Status': ship['Status'],
+                    'Last Update': ship['Timestamp']
                 })
             
-            st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
+            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+            
+        else:
+            st.warning("No ship data available. Please check the data sources.")
+    
+    with tab2:
+        st.subheader("🛰️ Global Satellite Network")
         
-        with tab3:
-            st.subheader("📈 Global Port Performance")
+        # Enhanced satellite network with better visibility
+        satellite_html = """
+        <div style="text-align: center; margin: 1rem 0;">
+            <div style="position: relative; width: 100%; height: 400px; background: linear-gradient(135deg, #0c0c2e 0%, #1a1a3e 100%); 
+                border-radius: 15px; overflow: hidden; border: 2px solid rgba(102, 126, 234, 0.5); box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+                <canvas id="satelliteNetwork" style="width: 100%; height: 100%;"></canvas>
+            </div>
+            <div style="margin-top: 1rem; color: #667eea; font-weight: bold;">
+                🌐 LIVE SATELLITE NETWORK • REAL-TIME DATA TRANSMISSION
+            </div>
+        </div>
+        
+        <script>
+            class SatelliteNetwork {
+                constructor() {
+                    this.canvas = document.getElementById('satelliteNetwork');
+                    this.ctx = this.canvas.getContext('2d');
+                    this.satellites = [];
+                    this.connections = [];
+                    this.dataPackets = [];
+                    
+                    this.init();
+                }
+                
+                init() {
+                    this.resize();
+                    this.createSatellites();
+                    this.createConnections();
+                    this.animate();
+                    
+                    window.addEventListener('resize', () => this.resize());
+                }
+                
+                resize() {
+                    this.canvas.width = this.canvas.offsetWidth;
+                    this.canvas.height = this.canvas.offsetHeight;
+                    this.satellites = [];
+                    this.connections = [];
+                    this.createSatellites();
+                    this.createConnections();
+                }
+                
+                createSatellites() {
+                    const satelliteCount = 12;
+                    const padding = 100;
+                    
+                    for (let i = 0; i < satelliteCount; i++) {
+                        const angle = (i / satelliteCount) * Math.PI * 2;
+                        const radius = Math.min(this.canvas.width, this.canvas.height) / 2 - padding;
+                        
+                        this.satellites.push({
+                            x: this.canvas.width / 2 + Math.cos(angle) * radius,
+                            y: this.canvas.height / 2 + Math.sin(angle) * radius,
+                            size: 10,
+                            orbitSpeed: 0.0003 + Math.random() * 0.0003,
+                            orbitAngle: angle,
+                            orbitRadius: radius,
+                            color: this.getSatelliteColor(),
+                            pulsePhase: Math.random() * Math.PI * 2
+                        });
+                    }
+                    
+                    // Add central hub
+                    this.satellites.push({
+                        x: this.canvas.width / 2,
+                        y: this.canvas.height / 2,
+                        size: 15,
+                        orbitSpeed: 0,
+                        orbitAngle: 0,
+                        orbitRadius: 0,
+                        color: '#ff6b6b',
+                        pulsePhase: 0
+                    });
+                }
+                
+                createConnections() {
+                    // Connect satellites to central hub
+                    for (let i = 0; i < this.satellites.length - 1; i++) {
+                        this.connections.push({
+                            from: i,
+                            to: this.satellites.length - 1,
+                            strength: 0.8,
+                            dataFlow: Math.random() * 0.03 + 0.01
+                        });
+                    }
+                    
+                    // Connect some satellites to each other
+                    for (let i = 0; i < this.satellites.length - 1; i++) {
+                        for (let j = i + 1; j < this.satellites.length - 1; j++) {
+                            if (Math.random() > 0.6) {
+                                this.connections.push({
+                                    from: i,
+                                    to: j,
+                                    strength: 0.4,
+                                    dataFlow: Math.random() * 0.02 + 0.005
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                getSatelliteColor() {
+                    const colors = ['#667eea', '#764ba2', '#f093fb', '#4fc3f7', '#81c784', '#fff176', '#ff6b6b', '#45b7d1'];
+                    return colors[Math.floor(Math.random() * colors.length)];
+                }
+                
+                animate() {
+                    // Clear with gradient background
+                    const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+                    gradient.addColorStop(0, 'rgba(12, 12, 46, 0.8)');
+                    gradient.addColorStop(1, 'rgba(26, 26, 62, 0.8)');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    this.updateSatellites();
+                    this.drawConnections();
+                    this.drawSatellites();
+                    this.drawDataFlow();
+                    
+                    requestAnimationFrame(() => this.animate());
+                }
+                
+                updateSatellites() {
+                    this.satellites.forEach((sat, index) => {
+                        if (sat.orbitSpeed > 0) {
+                            sat.orbitAngle += sat.orbitSpeed;
+                            sat.x = this.canvas.width / 2 + Math.cos(sat.orbitAngle) * sat.orbitRadius;
+                            sat.y = this.canvas.height / 2 + Math.sin(sat.orbitAngle) * sat.orbitRadius;
+                        }
+                        
+                        sat.pulsePhase += 0.03;
+                    });
+                }
+                
+                drawConnections() {
+                    this.connections.forEach(conn => {
+                        const from = this.satellites[conn.from];
+                        const to = this.satellites[conn.to];
+                        
+                        // Animated connection line
+                        const gradient = this.ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+                        gradient.addColorStop(0, `${from.color}66`);
+                        gradient.addColorStop(1, `${to.color}66`);
+                        
+                        this.ctx.strokeStyle = gradient;
+                        this.ctx.lineWidth = 1.5;
+                        this.ctx.setLineDash([5, 5]);
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(from.x, from.y);
+                        this.ctx.lineTo(to.x, to.y);
+                        this.ctx.stroke();
+                        this.ctx.setLineDash([]);
+                        
+                        // Occasionally send data packets
+                        if (Math.random() < conn.dataFlow) {
+                            this.createDataPacket(conn.from, conn.to);
+                        }
+                    });
+                }
+                
+                drawSatellites() {
+                    this.satellites.forEach(satellite => {
+                        const pulse = Math.sin(satellite.pulsePhase) * 0.4 + 0.6;
+                        
+                        // Satellite glow
+                        const gradient = this.ctx.createRadialGradient(
+                            satellite.x, satellite.y, 0,
+                            satellite.x, satellite.y, satellite.size * 5
+                        );
+                        gradient.addColorStop(0, `${satellite.color}${Math.floor(pulse * 150).toString(16).padStart(2, '0')}`);
+                        gradient.addColorStop(0.7, `${satellite.color}33`);
+                        gradient.addColorStop(1, `${satellite.color}00`);
+                        
+                        this.ctx.fillStyle = gradient;
+                        this.ctx.beginPath();
+                        this.ctx.arc(satellite.x, satellite.y, satellite.size * 5, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // Satellite body
+                        this.ctx.fillStyle = satellite.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(satellite.x, satellite.y, satellite.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // Satellite details
+                        this.ctx.strokeStyle = '#ffffff';
+                        this.ctx.lineWidth = 1;
+                        this.ctx.beginPath();
+                        this.ctx.arc(satellite.x, satellite.y, satellite.size * 0.6, 0, Math.PI * 2);
+                        this.ctx.stroke();
+                    });
+                }
+                
+                drawDataFlow() {
+                    // Update and draw data packets
+                    for (let i = this.dataPackets.length - 1; i >= 0; i--) {
+                        const packet = this.dataPackets[i];
+                        const from = this.satellites[packet.from];
+                        const to = this.satellites[packet.to];
+                        
+                        packet.progress += 0.015;
+                        
+                        if (packet.progress >= 1) {
+                            this.dataPackets.splice(i, 1);
+                            continue;
+                        }
+                        
+                        // Calculate current position
+                        const currentX = from.x + (to.x - from.x) * packet.progress;
+                        const currentY = from.y + (to.y - from.y) * packet.progress;
+                        
+                        // Draw data packet
+                        this.ctx.fillStyle = `rgba(102, 126, 234, ${1 - packet.progress * 0.7})`;
+                        this.ctx.beginPath();
+                        this.ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+                        this.ctx.fill();
+                        
+                        // Draw packet trail
+                        this.ctx.strokeStyle = `rgba(102, 126, 234, ${0.4 * (1 - packet.progress)})`;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(from.x, from.y);
+                        this.ctx.lineTo(currentX, currentY);
+                        this.ctx.stroke();
+                    }
+                }
+                
+                createDataPacket(fromIndex, toIndex) {
+                    this.dataPackets.push({
+                        from: fromIndex,
+                        to: toIndex,
+                        progress: 0
+                    });
+                }
+            }
             
-            # Create performance metrics
-            metrics_data = []
-            for port_name, port_data in list(self.port_system.ports.items())[:15]:
-                ships = self.port_system.get_port_ships(port_name)
-                metrics_data.append({
-                    'Port': port_name,
-                    'Efficiency': f"{np.random.uniform(65, 95):.1f}%",
-                    'Congestion': f"{np.random.uniform(10, 80):.1f}%",
-                    'Ships Today': len(ships),
-                    'Avg Turnaround': f"{np.random.uniform(12, 48):.0f}h"
-                })
+            // Initialize satellite network when tab is visible
+            let satelliteInstance = null;
             
-            st.dataframe(pd.DataFrame(metrics_data), use_container_width=True)
+            function initSatelliteNetwork() {
+                if (satelliteInstance) return;
+                satelliteInstance = new SatelliteNetwork();
+            }
+            
+            // Initialize when tab is clicked or page loads
+            setTimeout(initSatelliteNetwork, 100);
+            
+            // Reinitialize on tab click
+            document.addEventListener('click', function() {
+                setTimeout(initSatelliteNetwork, 50);
+            });
+        </script>
+        """
+        components.html(satellite_html, height=450)
+        
+        # Satellite status
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Active Satellites", "12", "Online")
+        with col2:
+            st.metric("Data Flow", "2.4 GB/s", "Optimal")
+        with col3:
+            st.metric("Coverage", "98.7%", "Global")
+        
+        # Port comparison table
+        st.subheader("🏆 Top Global Ports by Activity")
+        comparison_data = []
+        top_ports = list(self.port_system.ports.keys())[:8]  # Show top 8 ports
+        for port_name in top_ports:
+            ships = self.port_system.get_port_ships(port_name)
+            port_data = self.port_system.ports[port_name]
+            comparison_data.append({
+                'Port': port_name,
+                'Country': port_data['country'],
+                'Region': port_data['region'],
+                'Active Vessels': len(ships),
+                'Traffic Volume': port_data['volume'],
+                'Avg Cargo Value': f"${np.mean([s.get('Cargo_Value_M', 0) for s in ships]):.1f}M"
+            })
+        
+        st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
+    
+    with tab3:
+        st.subheader("📈 Global Port Performance")
+        
+        # Create performance metrics
+        metrics_data = []
+        for port_name, port_data in list(self.port_system.ports.items())[:12]:
+            ships = self.port_system.get_port_ships(port_name)
+            metrics_data.append({
+                'Port': port_name,
+                'Region': port_data['region'],
+                'Efficiency': f"{np.random.uniform(65, 95):.1f}%",
+                'Congestion': f"{np.random.uniform(10, 80):.1f}%",
+                'Ships Today': len(ships),
+                'Avg Turnaround': f"{np.random.uniform(12, 48):.0f}h",
+                'Volume Tier': port_data['volume']
+            })
+        
+        st.dataframe(pd.DataFrame(metrics_data), use_container_width=True)
     
     def show_live_tracking(self):
         """Live ship tracking"""
