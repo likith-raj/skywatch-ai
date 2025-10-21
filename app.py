@@ -624,60 +624,141 @@ class PredictiveAI:
         return anomalies
 
 # =============================================================================
-# GLOBAL MULTI-PORT SYSTEM
+# ULTIMATE GLOBAL MULTI-PORT SYSTEM
 # =============================================================================
 
 class GlobalPortSystem:
     def __init__(self):
         self.ports = {
-            "New York": {"lat": 40.68, "lon": -74.02, "country": "USA", "timezone": "EST"},
-            "Singapore": {"lat": 1.26, "lon": 103.82, "country": "Singapore", "timezone": "SGT"},
-            "Rotterdam": {"lat": 51.92, "lon": 4.48, "country": "Netherlands", "timezone": "CET"},
-            "Shanghai": {"lat": 31.23, "lon": 121.47, "country": "China", "timezone": "CST"},
-            "Los Angeles": {"lat": 33.72, "lon": -118.27, "country": "USA", "timezone": "PST"},
-            "Hamburg": {"lat": 53.54, "lon": 9.98, "country": "Germany", "timezone": "CET"},
-            "Dubai": {"lat": 25.27, "lon": 55.29, "country": "UAE", "timezone": "GST"},
-            "Tokyo": {"lat": 35.44, "lon": 139.77, "country": "Japan", "timezone": "JST"}
+            # NORTH AMERICA
+            "New York": {"lat": 40.68, "lon": -74.02, "country": "USA", "region": "North America", "volume": "High"},
+            "Los Angeles": {"lat": 33.72, "lon": -118.27, "country": "USA", "region": "North America", "volume": "High"},
+            "Long Beach": {"lat": 33.76, "lon": -118.19, "country": "USA", "region": "North America", "volume": "High"},
+            "Seattle": {"lat": 47.60, "lon": -122.33, "country": "USA", "region": "North America", "volume": "Medium"},
+            "Vancouver": {"lat": 49.28, "lon": -123.11, "country": "Canada", "region": "North America", "volume": "Medium"},
+            "Montreal": {"lat": 45.50, "lon": -73.55, "country": "Canada", "region": "North America", "volume": "Medium"},
+            
+            # EUROPE
+            "Rotterdam": {"lat": 51.92, "lon": 4.48, "country": "Netherlands", "region": "Europe", "volume": "High"},
+            "Hamburg": {"lat": 53.54, "lon": 9.98, "country": "Germany", "region": "Europe", "volume": "High"},
+            "Antwerp": {"lat": 51.23, "lon": 4.40, "country": "Belgium", "region": "Europe", "volume": "High"},
+            "Felixstowe": {"lat": 51.96, "lon": 1.35, "country": "UK", "region": "Europe", "volume": "High"},
+            "Le Havre": {"lat": 49.48, "lon": 0.12, "country": "France", "region": "Europe", "volume": "Medium"},
+            "Bremen": {"lat": 53.08, "lon": 8.80, "country": "Germany", "region": "Europe", "volume": "Medium"},
+            "Valencia": {"lat": 39.45, "lon": -0.32, "country": "Spain", "region": "Europe", "volume": "Medium"},
+            "Piraeus": {"lat": 37.94, "lon": 23.64, "country": "Greece", "region": "Europe", "volume": "Medium"},
+            
+            # ASIA
+            "Shanghai": {"lat": 31.23, "lon": 121.47, "country": "China", "region": "Asia", "volume": "Very High"},
+            "Singapore": {"lat": 1.26, "lon": 103.82, "country": "Singapore", "region": "Asia", "volume": "Very High"},
+            "Shenzhen": {"lat": 22.54, "lon": 114.05, "country": "China", "region": "Asia", "volume": "Very High"},
+            "Ningbo": {"lat": 29.86, "lon": 121.55, "country": "China", "region": "Asia", "volume": "Very High"},
+            "Hong Kong": {"lat": 22.28, "lon": 114.16, "country": "China", "region": "Asia", "volume": "High"},
+            "Busan": {"lat": 35.10, "lon": 129.04, "country": "South Korea", "region": "Asia", "volume": "High"},
+            "Tokyo": {"lat": 35.44, "lon": 139.77, "country": "Japan", "region": "Asia", "volume": "High"},
+            "Yokohama": {"lat": 35.44, "lon": 139.64, "country": "Japan", "region": "Asia", "volume": "High"},
+            "Kaohsiung": {"lat": 22.61, "lon": 120.28, "country": "Taiwan", "region": "Asia", "volume": "High"},
+            "Port Klang": {"lat": 3.00, "lon": 101.40, "country": "Malaysia", "region": "Asia", "volume": "High"},
+            "Colombo": {"lat": 6.94, "lon": 79.84, "country": "Sri Lanka", "region": "Asia", "volume": "Medium"},
+            "Dubai": {"lat": 25.27, "lon": 55.29, "country": "UAE", "region": "Middle East", "volume": "High"},
+            "Jebel Ali": {"lat": 25.02, "lon": 55.06, "country": "UAE", "region": "Middle East", "volume": "High"},
+            
+            # SOUTH AMERICA
+            "Santos": {"lat": -23.96, "lon": -46.33, "country": "Brazil", "region": "South America", "volume": "High"},
+            "Buenos Aires": {"lat": -34.60, "lon": -58.37, "country": "Argentina", "region": "South America", "volume": "Medium"},
+            "Callao": {"lat": -12.06, "lon": -77.15, "country": "Peru", "region": "South America", "volume": "Medium"},
+            "Cartagena": {"lat": 10.39, "lon": -75.51, "country": "Colombia", "region": "South America", "volume": "Medium"},
+            
+            # AFRICA
+            "Durban": {"lat": -29.87, "lon": 31.04, "country": "South Africa", "region": "Africa", "volume": "Medium"},
+            "Mombasa": {"lat": -4.06, "lon": 39.67, "country": "Kenya", "region": "Africa", "volume": "Medium"},
+            "Lagos": {"lat": 6.45, "lon": 3.40, "country": "Nigeria", "region": "Africa", "volume": "Medium"},
+            "Alexandria": {"lat": 31.20, "lon": 29.89, "country": "Egypt", "region": "Africa", "volume": "Medium"},
+            
+            # OCEANIA
+            "Sydney": {"lat": -33.86, "lon": 151.20, "country": "Australia", "region": "Oceania", "volume": "Medium"},
+            "Melbourne": {"lat": -37.84, "lon": 144.94, "country": "Australia", "region": "Oceania", "volume": "Medium"},
+            "Auckland": {"lat": -36.84, "lon": 174.76, "country": "New Zealand", "region": "Oceania", "volume": "Low"}
+        }
+        
+        # Regional company patterns
+        self.regional_companies = {
+            "Asia": ["COSCO", "Evergreen", "ONE", "Yang Ming", "HMM", "OOCL", "PIL"],
+            "Europe": ["Maersk", "MSC", "Hapag-Lloyd", "CMA CGM", "Hamburg Sud"],
+            "North America": ["Maersk", "MSC", "COSCO", "CMA CGM", "Evergreen", "Matson"],
+            "South America": ["Maersk", "MSC", "COSCO", "Hapag-Lloyd", "Grimaldi"],
+            "Africa": ["Maersk", "MSC", "CMA CGM", "COSCO", "Safmarine"],
+            "Middle East": ["Maersk", "MSC", "COSCO", "Hapag-Lloyd", "UASC"],
+            "Oceania": ["Maersk", "MSC", "COSCO", "Hapag-Lloyd", "ANL"]
+        }
+        
+        self.regional_ship_types = {
+            "Asia": ["Container", "Container", "Bulk Carrier", "Tanker", "General Cargo"],
+            "Europe": ["Container", "Ro-Ro", "General Cargo", "Tanker", "Bulk Carrier"],
+            "North America": ["Container", "Tanker", "Bulk Carrier", "Vehicle Carrier", "General Cargo"],
+            "South America": ["Bulk Carrier", "Container", "Tanker", "General Cargo"],
+            "Africa": ["General Cargo", "Container", "Bulk Carrier", "Tanker"],
+            "Middle East": ["Tanker", "Container", "Bulk Carrier", "General Cargo"],
+            "Oceania": ["Container", "Bulk Carrier", "General Cargo", "Vehicle Carrier"]
         }
     
     def get_port_ships(self, port_name):
-        """Get ships for specific port with realistic local patterns"""
+        """Get ships for specific port with realistic regional patterns"""
         port = self.ports[port_name]
+        region = port.get('region', 'Asia')
         
-        # Different ship patterns by region
-        if port_name in ["Singapore", "Shanghai", "Tokyo"]:
-            companies = ["COSCO", "Evergreen", "ONE", "Yang Ming", "HMM"]
-            ship_types = ["Container", "Container", "Bulk Carrier", "Tanker"]
-        elif port_name in ["Rotterdam", "Hamburg"]:
-            companies = ["Maersk", "MSC", "Hapag-Lloyd", "CMA CGM"]
-            ship_types = ["Container", "Ro-Ro", "General Cargo"]
-        else:  # Americas
-            companies = ["Maersk", "MSC", "COSCO", "CMA CGM", "Evergreen"]
-            ship_types = ["Container", "Tanker", "Bulk Carrier", "Cargo"]
+        # Get regional-specific companies and ship types
+        companies = self.regional_companies.get(region, ["Maersk", "MSC", "COSCO"])
+        ship_types = self.regional_ship_types.get(region, ["Container", "Tanker", "Bulk Carrier"])
+        
+        # Adjust ship count based on port volume
+        volume_multiplier = {
+            'Very High': 1.5,
+            'High': 1.2,
+            'Medium': 1.0,
+            'Low': 0.7
+        }
+        base_count = 15
+        ship_count = int(base_count * volume_multiplier.get(port.get('volume', 'Medium'), 1.0))
         
         ships = []
         base_lat, base_lon = port["lat"], port["lon"]
         
-        for i in range(np.random.randint(8, 20)):
-            lat = base_lat + (np.random.random() - 0.5) * 0.04
-            lon = base_lon + (np.random.random() - 0.5) * 0.04
+        for i in range(np.random.randint(ship_count-5, ship_count+5)):
+            lat = base_lat + (np.random.random() - 0.5) * 0.06
+            lon = base_lon + (np.random.random() - 0.5) * 0.06
             
             company = np.random.choice(companies)
             ship_type = np.random.choice(ship_types)
             
+            # Adjust cargo value based on ship type and region
+            base_value = {
+                'Container': np.random.randint(20, 100),
+                'Tanker': np.random.randint(50, 150),
+                'Bulk Carrier': np.random.randint(10, 60),
+                'Cargo': np.random.randint(5, 40),
+                'Ro-Ro': np.random.randint(15, 80),
+                'Vehicle Carrier': np.random.randint(25, 90),
+                'General Cargo': np.random.randint(8, 50)
+            }.get(ship_type, 30)
+            
+            # Asian ports have higher values
+            if region == 'Asia':
+                base_value = int(base_value * 1.3)
+            
             ships.append({
-                'MMSI': f"367{i:06d}",
-                'Name': f"{company} {port_name.split()[0].upper()} {i+1}",
+                'MMSI': f"367{np.random.randint(100000, 999999)}",
+                'Name': f"{company} {np.random.choice(['SEA', 'OCEAN', 'MARINE', 'GLOBAL', 'WORLD'])} {np.random.randint(1000, 9999)}",
                 'Type': ship_type,
                 'Company': company,
                 'Latitude': round(lat, 6),
                 'Longitude': round(lon, 6),
-                'Speed': np.random.randint(0, 18),
-                'Status': np.random.choice(["Underway", "Anchored", "Moored", "Docked"]),
+                'Speed': np.random.randint(0, 22),
+                'Status': np.random.choice(["Underway", "Anchored", "Moored", "Docked", "Berthed"]),
                 'Destination': port_name,
                 'Port': port_name,
                 'Timestamp': datetime.now().strftime('%H:%M:%S'),
-                'Cargo_Value_M': np.random.randint(10, 150)
+                'Cargo_Value_M': base_value
             })
         
         return ships
@@ -966,46 +1047,203 @@ class SkyWatchEnterprise:
             st.write(f"Latest: {anomalies[0]['type']}")
         st.markdown('</div>', unsafe_allow_html=True)
     
+    def show_global_real_time_map(self):
+        """Show real-time global map with all active ships"""
+        st.subheader("🌍 Global Real-Time Shipping Network")
+        
+        # Create a massive dataset of ships across all ports
+        all_ships = []
+        for port_name in self.port_system.ports.keys():
+            port_ships = self.port_system.get_port_ships(port_name)
+            all_ships.extend(port_ships)
+        
+        if all_ships:
+            all_ships_df = pd.DataFrame(all_ships)
+            
+            # Create unique color mapping for ship types
+            ship_type_colors = {
+                'Container': '#FF6B6B',
+                'Tanker': '#4ECDC4', 
+                'Bulk Carrier': '#45B7D1',
+                'Cargo': '#96CEB4',
+                'Ro-Ro': '#FFEAA7',
+                'Vehicle Carrier': '#DDA0DD',
+                'General Cargo': '#98D8C8'
+            }
+            
+            # Create the global map
+            fig = px.scatter_mapbox(
+                all_ships_df,
+                lat="Latitude",
+                lon="Longitude",
+                hover_name="Name",
+                hover_data={
+                    "Type": True,
+                    "Company": True,
+                    "Speed": True,
+                    "Port": True,
+                    "Cargo_Value_M": True,
+                    "Timestamp": True
+                },
+                color="Type",
+                color_discrete_map=ship_type_colors,
+                zoom=1,
+                height=700,
+                title="🚢 LIVE GLOBAL SHIPPING NETWORK - Real-Time Vessel Tracking",
+                size_max=15
+            )
+            
+            # Add port locations as larger points
+            port_df = pd.DataFrame([
+                {
+                    'Port': name, 
+                    'Latitude': data['lat'], 
+                    'Longitude': data['lon'], 
+                    'Country': data['country'],
+                    'Volume': data['volume'],
+                    'Size': 20 if data['volume'] in ['Very High', 'High'] else 15
+                }
+                for name, data in self.port_system.ports.items()
+            ])
+            
+            # Add ports to the map
+            fig.add_trace(px.scatter_mapbox(
+                port_df,
+                lat="Latitude",
+                lon="Longitude",
+                hover_name="Port",
+                hover_data={"Country": True, "Volume": True},
+                size="Size",
+                size_max=20,
+                color_discrete_sequence=["red"]
+            ).data[0])
+            
+            fig.update_layout(
+                mapbox_style="dark",
+                mapbox=dict(
+                    accesstoken=None,  # You can add Mapbox token for better styling
+                    center=dict(lat=20, lon=0),
+                    zoom=1
+                ),
+                showlegend=True,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01,
+                    bgcolor="rgba(0,0,0,0.5)"
+                ),
+                margin={"r":0,"t":50,"l":0,"b":0}
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Global statistics
+            st.subheader("📊 Global Shipping Intelligence")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_ships = len(all_ships)
+                st.metric("Total Active Vessels", f"{total_ships:,}")
+            
+            with col2:
+                total_value = sum(ship.get('Cargo_Value_M', 0) for ship in all_ships)
+                st.metric("Total Cargo Value", f"${total_value:,.0f}M")
+            
+            with col3:
+                avg_speed = np.mean([ship.get('Speed', 0) for ship in all_ships])
+                st.metric("Avg Speed", f"{avg_speed:.1f} knots")
+            
+            with col4:
+                container_ships = len([s for s in all_ships if s.get('Type') == 'Container'])
+                st.metric("Container Ships", f"{container_ships:,}")
+            
+            # Regional breakdown
+            st.subheader("🌐 Regional Distribution")
+            
+            regional_data = {}
+            for ship in all_ships:
+                port = ship.get('Port', 'Unknown')
+                if port in self.port_system.ports:
+                    region = self.port_system.ports[port].get('region', 'Unknown')
+                    regional_data[region] = regional_data.get(region, 0) + 1
+            
+            # Create regional chart
+            fig_regional = px.pie(
+                values=list(regional_data.values()),
+                names=list(regional_data.keys()),
+                title="Vessels by Region"
+            )
+            st.plotly_chart(fig_regional, use_container_width=True)
+            
+            # Real-time ship table
+            st.subheader("📋 Live Vessel Feed")
+            
+            # Show most recent ships
+            display_data = []
+            for ship in all_ships[:20]:  # Show first 20 ships
+                display_data.append({
+                    'Vessel': ship['Name'],
+                    'Type': ship['Type'],
+                    'Company': ship['Company'],
+                    'Port': ship['Port'],
+                    'Speed': f"{ship['Speed']} knots",
+                    'Cargo Value': f"${ship['Cargo_Value_M']}M",
+                    'Status': ship['Status'],
+                    'Last Update': ship['Timestamp']
+                })
+            
+            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+            
+        else:
+            st.warning("No ship data available. Please check the data sources.")
+    
     def show_global_overview(self):
-        """Global port overview"""
-        st.subheader("🌍 Global Port Network")
+        """Global overview with real-time world map"""
         
-        # Add satellite network animation
-        self.animations.create_satellite_network()
+        tab1, tab2, tab3 = st.tabs(["🗺️ Live World Map", "📡 Satellite Network", "📊 Port Analytics"])
         
-        # Create global map with all ports
-        port_df = pd.DataFrame([
-            {'Port': name, 'Latitude': data['lat'], 'Longitude': data['lon'], 'Country': data['country']}
-            for name, data in self.port_system.ports.items()
-        ])
+        with tab1:
+            self.show_global_real_time_map()
         
-        fig = px.scatter_mapbox(
-            port_df,
-            lat="Latitude",
-            lon="Longitude", 
-            hover_name="Port",
-            hover_data=["Country"],
-            size=[10] * len(port_df),
-            color_discrete_sequence=["red"],
-            zoom=1,
-            height=500
-        )
-        fig.update_layout(mapbox_style="open-street-map")
-        st.plotly_chart(fig, use_container_width=True)
+        with tab2:
+            # Keep your existing satellite network
+            self.animations.create_satellite_network()
+            
+            # Port comparison table
+            st.subheader("🏆 Top Global Ports by Activity")
+            comparison_data = []
+            for port_name in list(self.port_system.ports.keys())[:10]:
+                ships = self.port_system.get_port_ships(port_name)
+                port_data = self.port_system.ports[port_name]
+                comparison_data.append({
+                    'Port': port_name,
+                    'Country': port_data['country'],
+                    'Region': port_data['region'],
+                    'Active Vessels': len(ships),
+                    'Traffic Volume': port_data['volume'],
+                    'Avg Cargo Value': f"${np.mean([s.get('Cargo_Value_M', 0) for s in ships]):.1f}M"
+                })
+            
+            st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
         
-        # Port comparison table
-        st.subheader("📊 Port Performance Comparison")
-        comparison_data = []
-        for port_name in list(self.port_system.ports.keys())[:4]:
-            ships = self.port_system.get_port_ships(port_name)
-            comparison_data.append({
-                'Port': port_name,
-                'Active Vessels': len(ships),
-                'Avg Cargo Value': f"${np.mean([s.get('Cargo_Value_M', 0) for s in ships]):.1f}M",
-                'Efficiency': f"{np.random.uniform(70, 95):.1f}%"
-            })
-        
-        st.dataframe(pd.DataFrame(comparison_data), use_container_width=True)
+        with tab3:
+            st.subheader("📈 Global Port Performance")
+            
+            # Create performance metrics
+            metrics_data = []
+            for port_name, port_data in list(self.port_system.ports.items())[:15]:
+                ships = self.port_system.get_port_ships(port_name)
+                metrics_data.append({
+                    'Port': port_name,
+                    'Efficiency': f"{np.random.uniform(65, 95):.1f}%",
+                    'Congestion': f"{np.random.uniform(10, 80):.1f}%",
+                    'Ships Today': len(ships),
+                    'Avg Turnaround': f"{np.random.uniform(12, 48):.0f}h"
+                })
+            
+            st.dataframe(pd.DataFrame(metrics_data), use_container_width=True)
     
     def show_live_tracking(self):
         """Live ship tracking"""
